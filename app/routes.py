@@ -26,7 +26,7 @@ for dir in os.listdir(subapp_path):
     if not os.path.isdir(full_path):continue
     if dir.lower().startswith('disabled'):continue
     if not os.path.exists(os.path.join(full_path,'routes.py')):continue
-    mod_name=os.path.relpath(os.path.join(full_path,'routes')).replace('\\','.')
+    mod_name=os.path.relpath(os.path.join(full_path,'routes')).replace('\\','.').replace('/','.')
 
     importlib.import_module(mod_name)
     imported_subapps.append(dir)
