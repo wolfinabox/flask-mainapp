@@ -3,7 +3,7 @@ from flask import render_template, request, url_for, flash, redirect, send_from_
 from flask_cors import cross_origin
 import json
 from app import app
-from .wiki.lookup import get_melody_list,get_horn_list,get_horns_from_effects,get_effects_from_horn,reset_data,get_horn_names,get_melody_names
+from .wiki.lookup import get_melody_list,get_horn_list,get_horns_from_effects,get_effects_from_horn,reset_data,get_horn_names,get_melody_names,load_data
 
 @app.route('/mhw_horn_generator')
 @cross_origin()
@@ -81,4 +81,6 @@ def req_reset_data():
     reset_data()
     parse_time=get_horn_list()['parse_time']
     return jsonify({'response':parse_time})
-    
+
+#load data initially, before server starts
+load_data()

@@ -28,7 +28,9 @@ def load_data(horns_path:str=local_path('horns.json'),melodies_path:str=local_pa
     #if horns not already loaded
     if not HORNS:
         if not os.path.exists(horns_path):
+            print('Requesting horns...')
             HORNS=get_horns()
+            print('Got horns')
             json.dump(HORNS,open(horns_path,'w'),indent=4,separators=(',',':'),sort_keys=True)
         else:
             with open(horns_path,'r') as f:
@@ -39,7 +41,9 @@ def load_data(horns_path:str=local_path('horns.json'),melodies_path:str=local_pa
     #if melodies not already loaded
     if not MELODIES:
         if not os.path.exists(melodies_path):
+            print('Requesting melodies...')
             MELODIES=get_melodies()
+            print('Got melodies')
             json.dump(MELODIES,open(melodies_path,'w'),indent=4,separators=(',',':'),sort_keys=True)
         else:
             with open(melodies_path,'r') as f:
