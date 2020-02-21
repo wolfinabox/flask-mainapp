@@ -2,11 +2,22 @@ import os
 import json
 from functools import lru_cache
 from app.utils import local_path
-from .horns import get_horns,request_horn_info
+from .horns import get_horns
 from .melodies import get_melodies
 
 HORNS={}
 MELODIES={}
+
+def reset_data(horns_path:str=local_path('horns.json'),melodies_path:str=local_path('melodies.json')):
+    get_horns_from_effects.cache_clear()
+    get_effects_from_horn.cache_clear()
+    # get_horn_info.cache_clear()
+    
+    HORNS=None
+    MELODIES=None
+    if os.path.exists( horns_path):os.remove(horns_path)
+    if os.path.exists( melodies_path):os.remove(melodies_path)
+    load_data()
 
 def load_data(horns_path:str=local_path('horns.json'),melodies_path:str=local_path('melodies.json')):
     """
@@ -54,20 +65,35 @@ def get_horns_from_effects(effects:list):
         effects=[effects]
     horns,melodies=load_data()
     valid_horns=[]
+    effects=[effect.strip() for effect in effects]
+    notes_required={e:set() for e in effects}
+    for melody,melody_data in melodies['melodies'].items():
+       for effect in effects:
+           if effect in melody_data['effects']:
+               notes=[m for m in melody.split('-')]
+               if sorted(notes) not in [sorted(n) for n in notes_required[effect]]:
+                notes_required[effect].add(tuple(notes))
 
+
+    
     for horn,horn_data in horns['horns'].items():
         valid=True
-        if type(horn_data)!=dict:continue
-        if horn=="Fate's Dirge":
-            print()
-        for effect in effects:
-            if not any(can_play(horn_data['notes'],melody_option) for melody_option in melodies['melodies'][effect]['melodies']):
+        #get horn notes
+        horn_notes=[n for n in horn_data['notes'].split('-')]
+        #check it can play every effect
+        for effect,combinations in notes_required.items():
+            #check every combination that makes this effect
+            if not any(all(cn in horn_notes for cn in combination) for combination in combinations):
+                #it can't play this effect, so isn't valid
                 valid=False
+                break
+        if valid: valid_horns.append(horn_data)
 
-        if valid:valid_horns.append(horn_data)
 
-   
-        
+
+
+
+    
     return valid_horns
 
 @lru_cache()
@@ -79,14 +105,19 @@ def get_effects_from_horn(horn:dict):
     if type(horn)==str:
         if horn not in horns['horns']:return None
         horn=horns['horns'][horn]
+
+    horn_notes=set(horn['notes'].split('-'))
+
     effects=[]
-    
+
     for melody,melody_data in melodies['melodies'].items():
-        if type(melody_data)!=dict:continue
-        horn_notes=horn['notes']
-        
-        if any(can_play(horn_notes,melody_option) for melody_option in melodies['melodies'][melody]['melodies']):
+        melody_notes=set(melody.split('-'))
+        if all(n in horn_notes for n in melody_notes):
             effects.append(melody_data)
+
+
+    
+   
     return effects
 
 # @lru_cache()
@@ -108,38 +139,15 @@ def get_melody_list():
     horns,melodies=load_data()
     return melodies
 
-def can_play(horn_notes:list,melody_notes:list):
-    """
-    Check if the given horn notes are enough to play the given melody
-    """
-    for note_group in melody_notes:
-        intersect=set(note_group).intersection(horn_notes)
-        if len(intersect)<1:return False
-    return True
+def get_horn_names():
+    horns,melodies=load_data()
+    return sorted(horns['horns'].keys)
 
-
-@lru_cache()
-def get_horn_info(horn:str):
-    """
-    Look up basic info for the given horn. `horn` can be a link to the horn's wiki page, or the horn name.
-    """
-    #get name and link, one way or another
-    link,name,='',''
-    horns=get_horn_list()
-    if 'fextralife' in horn:
-        link=horn
-        name=horn.split('/')[-1].replace('+',' ')
-    else:
-        name=horn
-        link=horns['horns'].get(name,'')
-    if not link or not name:
-        return None
-    
-    info=horns['horn'].get(name,{})
-    #if info not already cached, get
-    if not info:
-        info=request_horn_info(name)
-        horns['horn']['info']=info
-        save_data()
-    return info
+def get_melody_names():
+    horns,melodies=load_data()
+    melody_names=set()
+    for melody,data in melodies['melodies'].items():
+        for effect in data['effects']:
+            melody_names.add(effect)
+    return sorted(list(melody_names))
 
