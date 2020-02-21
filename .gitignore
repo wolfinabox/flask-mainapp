@@ -1,4 +1,6 @@
 OLD_*
+horns.json
+melodies.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
