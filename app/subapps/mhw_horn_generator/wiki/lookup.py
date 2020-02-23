@@ -68,6 +68,8 @@ def get_horns_from_effects(effects:list):
     if type(effects)==str:
         effects=[effects]
     horns,melodies=load_data()
+    if not effects:
+        return list(horns['horns'].values())
     valid_horns=[]
     effects=[effect.strip() for effect in effects]
     notes_required={e:set() for e in effects}
